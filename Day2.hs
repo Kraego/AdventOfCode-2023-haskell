@@ -76,8 +76,16 @@ readInRecords fp = do
   let records = map extractFromLine $ lines contents
   return records
 
+powerRecord :: CubeRecord -> Int
+powerRecord record = red record * green record * blue record
+
+powerOfCubset :: [CubeRecord] -> Int
+powerOfCubset [] = 0
+powerOfCubset xs = powerRecord (head xs) + powerOfCubset (tail xs)
+
 main :: IO ()
 main = do
   records <- readInRecords "./Input/Day2.txt"
   let matching = filter (\x -> red x <= 12 && green x <= 13 && blue x <= 14) records
   print $ idSum matching
+  print $ powerOfCubset records
