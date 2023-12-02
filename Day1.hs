@@ -1,11 +1,10 @@
 import Data.Char (isDigit, digitToInt)
 import qualified Data.Text    as Text
 import qualified Data.Text.IO as Text
-import Control.Monad 
 
 -- address overlapping
 replaceNumStrings :: [Char] -> [Char]
-replaceNumStrings xs 
+replaceNumStrings xs
     | null xs = xs
     | take 3 xs == "one"   = "o1e" ++ replaceNumStrings (drop 3 xs)
     | take 3 xs == "two"   = "t2o" ++ replaceNumStrings (drop 3 xs)
@@ -16,19 +15,18 @@ replaceNumStrings xs
     | take 5 xs == "seven" = "s7n" ++ replaceNumStrings (drop 3 xs)
     | take 5 xs == "eight" = "e8t" ++ replaceNumStrings (drop 3 xs)
     | take 4 xs == "nine"  = "n9e" ++ replaceNumStrings (drop 3 xs)
-    | otherwise = [head xs] ++ replaceNumStrings (tail xs)
- 
+    | otherwise = head xs : replaceNumStrings (tail xs)
+
 firstDigit :: [Char] -> Char
 firstDigit (x:xs)
     | isDigit x = x
     | otherwise = firstDigit xs
 
 sumLine :: [Char] -> Int
-sumLine xs = read $ [firstDigit xs] ++ [firstDigit (reverse xs)]
+sumLine xs = read $ firstDigit xs : [firstDigit (reverse xs)]
 
 sumWholeText :: [[Char]] -> Int
-sumWholeText [] = 0
-sumWholeText (x:xs) = (sumLine x) + sumWholeText xs
+sumWholeText xs = sum (map sumLine xs)
 
 doIt :: FilePath -> IO Int
 doIt fp = do
