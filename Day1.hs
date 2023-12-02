@@ -1,5 +1,4 @@
 import Data.Char (isDigit, digitToInt)
-import Data.Text(unpack)
 import qualified Data.Text    as Text
 import qualified Data.Text.IO as Text
 import Control.Monad 
