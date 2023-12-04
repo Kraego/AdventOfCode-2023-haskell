@@ -1,7 +1,8 @@
 import Data.Char (isDigit)
 import Data.Maybe(isJust, isNothing, fromJust)
+import Control.Arrow (Arrow(first))
 
-data MotorValue = MotorValue{
+data PartNumber = PartNumber{
     val :: Int,
     startIdx :: Int,
     endIdx :: Int,
@@ -20,22 +21,34 @@ getNumber (x:xs)
     | isDigit x = x:getNumber xs
     | otherwise = []
 
-getNextMotorValue :: [Char] -> Int -> Maybe MotorValue -> Maybe MotorValue
-getNextMotorValue [] _ _ = Nothing
-getNextMotorValue xs row previous
+getNextPartNumber :: [Char] -> Int -> Maybe PartNumber -> Maybe PartNumber
+getNextPartNumber [] _ _ = Nothing
+getNextPartNumber xs row previous
     | isNothing startIndex = Nothing
-    | isNothing previous = Just currentMotorValue
-    | otherwise = Just (MotorValue (val currentMotorValue) (startIdx currentMotorValue + startIdx previousMotorValue) (endIdx currentMotorValue + startIdx previousMotorValue) row)
+    | isNothing previous = Just currentPartNumber
+    | otherwise = Just (PartNumber (val currentPartNumber) (startIdx currentPartNumber + endIdx previousPartNumber) (endIdx currentPartNumber + endIdx previousPartNumber) row)
     where
         startIndex = getFirstDigitIdx $ zip [0..] xs
         number = getNumber (drop (fromJust startIndex) xs)
-        currentMotorValue = MotorValue (read number) (fromJust startIndex) (fromJust startIndex + length number) row
-        previousMotorValue = fromJust previous
+        currentPartNumber = PartNumber (read number) (fromJust startIndex) (fromJust startIndex + length number) row
+        previousPartNumber = fromJust previous
 
-getMotorValues :: [Char] -> Int -> Maybe MotorValue -> [MotorValue]
-getMotorValues xs row previous 
+getPartNumbers :: [Char] -> Int -> Maybe PartNumber -> [PartNumber]
+getPartNumbers xs row previous 
    | isNothing current = []
-   | otherwise = fromJust current:getMotorValues (drop (endIdx (fromJust current)) xs) row current
+   | otherwise = fromJust current:getPartNumbers (drop (endIdx (fromJust current)) xs) row current
     where
-        current = getNextMotorValue xs row previous
+        current = getNextPartNumber xs row previous
+
+readInMachineParts :: FilePath -> IO [PartNumber]
+readInMachineParts fp = do
+  contents <- readFile fp
+  let fileLines = zip [0..] $ lines contents
+  let records = map (\x -> getPartNumbers (snd x) (fst x) Nothing) fileLines  
+  return $ concat records
+
+main :: IO ()
+main = do
+  parts <- readInMachineParts "./Input/Day3.txt"
+  print parts
      
