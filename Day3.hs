@@ -5,7 +5,7 @@ import Distribution.Simple.Utils (xargs)
 import Distribution.Parsec (Parsec(parsec))
 import Data.Time.Format.ISO8601 (yearFormat)
 
-data PartNumber = PartNumber{
+data GearNumber = GearNumber{
     val :: Int,
     startIdx :: Int,
     endIdx :: Int,
@@ -41,30 +41,30 @@ getNumber (x:xs)
     | isDigit x = x:getNumber xs
     | otherwise = []
 
-getNextPartNumber :: [Char] -> Int -> Maybe PartNumber -> Maybe PartNumber
-getNextPartNumber [] _ _ = Nothing
-getNextPartNumber xs row previous
+getNextGearNumber :: [Char] -> Int -> Maybe GearNumber -> Maybe GearNumber
+getNextGearNumber [] _ _ = Nothing
+getNextGearNumber xs row previous
     | isNothing startIndex = Nothing
-    | isNothing previous = Just currentPartNumber
-    | otherwise = Just (PartNumber (val currentPartNumber) (startIdx currentPartNumber + offsetPrevious) (endIdx currentPartNumber + offsetPrevious) row)
+    | isNothing previous = Just currentGearNumber
+    | otherwise = Just (GearNumber (val currentGearNumber) (startIdx currentGearNumber + offsetPrevious) (endIdx currentGearNumber + offsetPrevious) row)
     where
         startIndex = getFirstDigitIdx $ zip [0..] xs
         number = getNumber (drop (fromJust startIndex) xs)
-        currentPartNumber = PartNumber (read number) (fromJust startIndex) (fromJust startIndex + length number) row
+        currentGearNumber = GearNumber (read number) (fromJust startIndex) (fromJust startIndex + length number) row
         offsetPrevious = endIdx $ fromJust previous
 
-getPartNumbers :: [Char] -> Int -> Maybe PartNumber -> [PartNumber]
-getPartNumbers xs row previous
+getGearNumbers :: [Char] -> Int -> Maybe GearNumber -> [GearNumber]
+getGearNumbers xs row previous
    | isNothing current = []
-   | otherwise = fromJust current:getPartNumbers (drop ((endIdx . fromJust) current) xs) row current
+   | otherwise = fromJust current:getGearNumbers (drop ((endIdx . fromJust) current) xs) row current
     where
-        current = getNextPartNumber xs row previous
+        current = getNextGearNumber xs row previous
 
-readInMachineParts :: FilePath -> IO [PartNumber]
-readInMachineParts fp = do
+readInMachineGears :: FilePath -> IO [GearNumber]
+readInMachineGears fp = do
   contents <- readFile fp
   let fileLines = zip [0..] $ lines contents
-  let records = map (\x -> getPartNumbers (snd x) (fst x) Nothing) fileLines
+  let records = map (\x -> getGearNumbers (snd x) (fst x) Nothing) fileLines
   return $ concat records
 
 getNextSymbol :: [(Int, Char)] -> Int -> Int -> Maybe PlanSymbol
@@ -75,42 +75,42 @@ getNextSymbol xs row offset
     where
         firstSymbolIdx = getFirstSymbolIdx xs
 
-getPartSymbols:: [(Int, Char)] -> Int -> Int -> [PlanSymbol]
-getPartSymbols xs row offset
+getPlanSymbols:: [(Int, Char)] -> Int -> Int -> [PlanSymbol]
+getPlanSymbols xs row offset
    | isNothing current = []
-   | otherwise = fromJust current:getPartSymbols (drop (currentIdx + 1) xs) row (currentIdx - 1)
+   | otherwise = fromJust current:getPlanSymbols (drop (currentIdx + 1) xs) row (currentIdx - 1)
     where
         current = getNextSymbol xs row offset
         currentIdx = (idx . fromJust) current
 
-readInPartSymbols :: FilePath -> IO [PlanSymbol]
-readInPartSymbols fp = do
+readInPlanSymbols :: FilePath -> IO [PlanSymbol]
+readInPlanSymbols fp = do
   contents <- readFile fp
   let fileLines = zip [0..] $ lines contents
-  let records = map (\x -> getPartSymbols (zip [0..] (snd x)) (fst x) 0) fileLines
+  let records = map (\x -> getPlanSymbols (zip [0..] (snd x)) (fst x) 0) fileLines
   return $ concat records
 
-countParts :: [PartNumber] -> [PlanSymbol] -> Int
-countParts [] _ = 0
-countParts (x:xs) ys = getAdjacentCount x ys + countParts xs ys
+countGears :: [GearNumber] -> [PlanSymbol] -> Int
+countGears [] _ = 0
+countGears (x:xs) ys = getAdjacentCount x ys + countGears xs ys
 
-isAdjacent :: PartNumber -> PlanSymbol -> Bool
+isAdjacent :: GearNumber -> PlanSymbol -> Bool
 isAdjacent x y
     | (rowIdx y == row x) && abs (idx y - startIdx x) <= 1 = True --symbol left
     | (rowIdx y == row x) && abs (idx y - endIdx x) <= 1 = True -- symbol right
-    | abs (rowIdx y - row x) == 1 && (abs (idx y - startIdx x) <= 1 || abs (idx y - endIdx x) <= 1) = True -- symbol below/above/diagonal
+    | abs (rowIdx y - row x) == 1 && (abs (idx y - startIdx x) <= 2 || abs (idx y - endIdx x) <= 2) = True -- symbol below/above/diagonal
     | otherwise = False
 
-getAdjacentCount :: PartNumber -> [PlanSymbol] -> Int
+getAdjacentCount :: GearNumber -> [PlanSymbol] -> Int
 getAdjacentCount x ys
     | any (isAdjacent x) ys = val x
     | otherwise = 0
 
 main :: IO ()
 main = do
-  parts <- readInMachineParts "./Input/Day3.txt"
-  partSymbols <- readInPartSymbols "./Input/Day3.txt"
-  print parts
-  -- print partSymbols
-  let count = countParts parts partSymbols
+  gears <- readInMachineGears "./Input/Day3.txt"
+  planSymbols <- readInPlanSymbols "./Input/Day3.txt"
+  print gears
+  -- print planSymbols
+  let count = countGears gears planSymbols
   print count
