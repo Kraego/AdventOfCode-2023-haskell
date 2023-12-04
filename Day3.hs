@@ -2,6 +2,8 @@ import Data.Char (isDigit)
 import Data.Maybe(isJust, isNothing, fromJust)
 import Control.Arrow (Arrow(first))
 import Distribution.Simple.Utils (xargs)
+import Distribution.Parsec (Parsec(parsec))
+import Data.Time.Format.ISO8601 (yearFormat)
 
 data PartNumber = PartNumber{
     val :: Int,
@@ -88,9 +90,27 @@ readInPartSymbols fp = do
   let records = map (\x -> getPartSymbols (zip [0..] (snd x)) (fst x) 0) fileLines
   return $ concat records
 
+countParts :: [PartNumber] -> [PlanSymbol] -> Int
+countParts [] _ = 0
+countParts (x:xs) ys = getAdjacentCount x ys + countParts xs ys
+
+isAdjacent :: PartNumber -> PlanSymbol -> Bool
+isAdjacent x y
+    | (rowIdx y == row x) && abs (idx y - startIdx x) <= 1 = True --symbol left
+    | (rowIdx y == row x) && abs (idx y - endIdx x) <= 1 = True -- symbol right
+    | abs (rowIdx y - row x) == 1 && (abs (idx y - startIdx x) <= 1 || abs (idx y - endIdx x) <= 1) = True -- symbol below/above/diagonal
+    | otherwise = False
+
+getAdjacentCount :: PartNumber -> [PlanSymbol] -> Int
+getAdjacentCount x ys
+    | any (isAdjacent x) ys = val x
+    | otherwise = 0
+
 main :: IO ()
 main = do
   parts <- readInMachineParts "./Input/Day3.txt"
-  print parts
   partSymbols <- readInPartSymbols "./Input/Day3.txt"
-  print partSymbols
+  print parts
+  -- print partSymbols
+  let count = countParts parts partSymbols
+  print count
