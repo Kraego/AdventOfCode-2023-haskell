@@ -1,4 +1,4 @@
-import Data.Char (isDigit, digitToInt)
+import Data.Char (isDigit)
 import qualified Data.Text    as Text
 import qualified Data.Text.IO as Text
 

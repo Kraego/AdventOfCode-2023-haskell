@@ -1,4 +1,4 @@
-import Data.Char (isDigit, digitToInt)
+import Data.Char (isDigit)
 
 data CubeRecord = CubeRecord{
     gameId :: Int,
