@@ -29,9 +29,6 @@ isSymbol x
     | x == '.' = False
     | otherwise = True
 
-getFirstSymbolIdx :: [(Int, Char)] -> Maybe Int
-getFirstSymbolIdx = getFirstMatch (isSymbol . snd)
-
 getNumber :: [Char] -> [Char]
 getNumber [] = []
 getNumber (x:xs)
@@ -70,22 +67,11 @@ readInMachineGears fp = do
   let records = map (\x -> getGearNumbers (snd x) (fst x) Nothing) fileLines
   return $ concat records
 
-getNextSymbol :: [(Int, Char)] -> Int -> Int -> Maybe PlanSymbol
-getNextSymbol [] _ _ = Nothing
-getNextSymbol xs row offset
-    | isJust firstSymbolIdx = Just (PlanSymbol (fromJust firstSymbolIdx + offset) row)
-    | otherwise = Nothing
-    where
-        firstSymbolIdx = getFirstSymbolIdx xs
-
 getPlanSymbols:: [(Int, Char)] -> Int -> [PlanSymbol]
-getPlanSymbols xs row 
-   | isNothing current = []
-   | otherwise = fromJust current:getPlanSymbols (drop (firstSymbolIdx + 1) xs) row 
-    where
-        current = getNextSymbol xs row 0
-        currentIdx = (idx . fromJust) current
-        firstSymbolIdx = fromJust $ getFirstSymbolIdx xs
+getPlanSymbols (x:xs) row
+    | null xs = []
+    | isSymbol $ snd x = PlanSymbol (fst x) row : getPlanSymbols xs row
+    | otherwise = getPlanSymbols xs row
 
 readInPlanSymbols :: FilePath -> IO [PlanSymbol]
 readInPlanSymbols fp = do
@@ -94,14 +80,10 @@ readInPlanSymbols fp = do
   let records = map (\x -> getPlanSymbols (zip [0..] (snd x)) (fst x)) fileLines
   return $ concat records
 
-countGears :: [GearNumber] -> [PlanSymbol] -> Int
-countGears [] _ = 0
-countGears (x:xs) ys = getAdjacentCount x ys + countGears xs ys
-
 isAdjacent :: GearNumber -> PlanSymbol -> Bool
 isAdjacent x y
     | abs (rowIdx y - row x) <= 1 && (idx y >= startIdx x && idx y <= endIdx x) = True --symbol below / above
-    | abs (rowIdx y - row x) <= 1 && (abs (idx y - startIdx x) <= 1 || abs (idx y - endIdx x) <= 1) = True -- symbol left/right/diagonal
+    | abs (rowIdx y - row x) <= 1 && (abs (idx y - startIdx x) <= 1 || abs (idx y - endIdx x) <= 1) = True -- symbol left/right
     | otherwise = False
 
 getAdjacentCount :: GearNumber -> [PlanSymbol] -> Int
@@ -109,11 +91,15 @@ getAdjacentCount x ys
     | any (isAdjacent x) ys = val x
     | otherwise = 0
 
+countGears :: [GearNumber] -> [PlanSymbol] -> Int
+countGears [] _ = 0
+countGears (x:xs) ys = getAdjacentCount x ys + countGears xs ys
+
 main :: IO ()
 main = do
   gears <- readInMachineGears "./Input/Day3.txt"
   planSymbols <- readInPlanSymbols "./Input/Day3.txt"
--- print gears
--- print planSymbols
+--   print gears
+--   print planSymbols
   let count = countGears gears planSymbols
   print count
