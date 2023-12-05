@@ -1,6 +1,5 @@
 import Data.Char (isDigit)
 import Data.Maybe(isJust, isNothing, fromJust)
-import Control.Arrow (Arrow(first))
 
 data GearNumber = GearNumber{
     val :: Int,
@@ -96,10 +95,7 @@ countGears [] _ = 0
 countGears (x:xs) ys = getAdjacentCount x ys + countGears xs ys
 
 isAdjacentToGear :: PlanSymbol -> GearNumber -> Bool
-isAdjacentToGear y x
-    | abs (rowIdx y - row x) <= 1 && (idx y >= startIdx x && idx y <= endIdx x) = True --symbol below / above
-    | abs (rowIdx y - row x) <= 1 && (abs (idx y - startIdx x) <= 1 || abs (idx y - endIdx x) <= 1) = True -- symbol left/right
-    | otherwise = False
+isAdjacentToGear y x = isAdjacent x y
 
 countRatio :: PlanSymbol -> [GearNumber] -> Int
 countRatio _ [] = 0
