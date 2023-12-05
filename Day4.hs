@@ -1,5 +1,6 @@
-import Data.Char (isDigit)
+import Data.Char(isDigit)
 import Data.Maybe(isJust, isNothing, fromJust)
+import Data.List(intersect)
 
 data CardData = CardData{
     numbers :: [Int],
@@ -62,18 +63,27 @@ readInCard fp = do
   return cards
 
 countPointMatches :: [Int] -> [Int] -> Int
-countPointMatches [] _ = 0
-countPointMatches _ [] = 0
-countPointMatches (x:xs) ys
-    | x `elem` ys = 1 + countPointMatches xs ys
-    | otherwise = countPointMatches xs ys
+countPointMatches xs ys = length $ intersect xs ys
 
 countCardPoints :: CardData -> Int
 countCardPoints card
     | points == 0 = 0
     | otherwise = 2^(points - 1)
-    where 
+    where
         points = countPointMatches (numbers card) (winnings card)
+
+updateCards :: [(Int, Int)] -> Int -> Int -> Int -> [(Int, Int)]
+updateCards [] _ _ _ = []
+updateCards (x:xs) idx current matches
+    | fst x > idx && fst x <= idx + matches = (fst x, snd x + current):updateCards xs idx current matches
+    | otherwise = x:updateCards xs idx current matches
+
+countCards :: [CardData] -> Int -> [(Int,Int)] -> Int
+countCards [] _ cards = sum $ map snd cards
+countCards (x:xs) cardIdx cards = countCards xs (cardIdx + 1) $ updateCards cards cardIdx currentCards points
+    where 
+        points = countPointMatches (numbers x) (winnings x)
+        currentCards = snd $ cards!!cardIdx
 
 main :: IO ()
 main = do
@@ -81,3 +91,5 @@ main = do
   -- print cards
   let points = sum (map countCardPoints cards)
   print points
+  let cardCount = countCards cards 0 $ zip [0..] $ map (const 1) cards
+  print cardCount
