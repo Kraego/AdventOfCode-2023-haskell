@@ -1,9 +1,6 @@
 import Data.Char (isDigit)
 import Data.Maybe(isJust, isNothing, fromJust)
 import Control.Arrow (Arrow(first))
-import Distribution.Simple.Utils (xargs)
-import Distribution.Parsec (Parsec(parsec))
-import Data.Time.Format.ISO8601 (yearFormat)
 
 data GearNumber = GearNumber{
     val :: Int,
@@ -41,24 +38,30 @@ getNumber (x:xs)
     | isDigit x = x:getNumber xs
     | otherwise = []
 
+countDigits :: (Num a, Integral t) => t -> a
+countDigits 0 = 0
+countDigits n = 1 + countDigits (div n 10)
+
 getNextGearNumber :: [Char] -> Int -> Maybe GearNumber -> Maybe GearNumber
 getNextGearNumber [] _ _ = Nothing
 getNextGearNumber xs row previous
     | isNothing startIndex = Nothing
-    | isNothing previous = Just currentGearNumber
-    | otherwise = Just (GearNumber (val currentGearNumber) (startIdx currentGearNumber + offsetPrevious) (endIdx currentGearNumber + offsetPrevious) row)
+    | isNothing previous = Just relativeGearNumber
+    | otherwise = Just (GearNumber (val relativeGearNumber) (startIdx relativeGearNumber + offsetPrevious + 1) (endIdx relativeGearNumber + offsetPrevious + 1) row)
     where
         startIndex = getFirstDigitIdx $ zip [0..] xs
         number = getNumber (drop (fromJust startIndex) xs)
-        currentGearNumber = GearNumber (read number) (fromJust startIndex) (fromJust startIndex + length number) row
+        relativeGearNumber = GearNumber (read number) (fromJust startIndex) (fromJust startIndex + length number - 1) row
         offsetPrevious = endIdx $ fromJust previous
 
 getGearNumbers :: [Char] -> Int -> Maybe GearNumber -> [GearNumber]
 getGearNumbers xs row previous
    | isNothing current = []
-   | otherwise = fromJust current:getGearNumbers (drop ((endIdx . fromJust) current) xs) row current
+   | otherwise = fromJust current:getGearNumbers (drop (startIndex + currentLen) xs) row current
     where
         current = getNextGearNumber xs row previous
+        currentLen = (countDigits . val . fromJust) current
+        startIndex = fromJust (getFirstDigitIdx $ zip [0..] xs)
 
 readInMachineGears :: FilePath -> IO [GearNumber]
 readInMachineGears fp = do
@@ -75,19 +78,20 @@ getNextSymbol xs row offset
     where
         firstSymbolIdx = getFirstSymbolIdx xs
 
-getPlanSymbols:: [(Int, Char)] -> Int -> Int -> [PlanSymbol]
-getPlanSymbols xs row offset
+getPlanSymbols:: [(Int, Char)] -> Int -> [PlanSymbol]
+getPlanSymbols xs row 
    | isNothing current = []
-   | otherwise = fromJust current:getPlanSymbols (drop (currentIdx + 1) xs) row (currentIdx - 1)
+   | otherwise = fromJust current:getPlanSymbols (drop (firstSymbolIdx + 1) xs) row 
     where
-        current = getNextSymbol xs row offset
+        current = getNextSymbol xs row 0
         currentIdx = (idx . fromJust) current
+        firstSymbolIdx = fromJust $ getFirstSymbolIdx xs
 
 readInPlanSymbols :: FilePath -> IO [PlanSymbol]
 readInPlanSymbols fp = do
   contents <- readFile fp
   let fileLines = zip [0..] $ lines contents
-  let records = map (\x -> getPlanSymbols (zip [0..] (snd x)) (fst x) 0) fileLines
+  let records = map (\x -> getPlanSymbols (zip [0..] (snd x)) (fst x)) fileLines
   return $ concat records
 
 countGears :: [GearNumber] -> [PlanSymbol] -> Int
@@ -96,9 +100,8 @@ countGears (x:xs) ys = getAdjacentCount x ys + countGears xs ys
 
 isAdjacent :: GearNumber -> PlanSymbol -> Bool
 isAdjacent x y
-    | (rowIdx y == row x) && abs (idx y - startIdx x) <= 1 = True --symbol left
-    | (rowIdx y == row x) && abs (idx y - endIdx x) <= 1 = True -- symbol right
-    | abs (rowIdx y - row x) == 1 && (abs (idx y - startIdx x) <= 2 || abs (idx y - endIdx x) <= 2) = True -- symbol below/above/diagonal
+    | abs (rowIdx y - row x) <= 1 && (idx y >= startIdx x && idx y <= endIdx x) = True --symbol below / above
+    | abs (rowIdx y - row x) <= 1 && (abs (idx y - startIdx x) <= 1 || abs (idx y - endIdx x) <= 1) = True -- symbol left/right/diagonal
     | otherwise = False
 
 getAdjacentCount :: GearNumber -> [PlanSymbol] -> Int
@@ -110,7 +113,7 @@ main :: IO ()
 main = do
   gears <- readInMachineGears "./Input/Day3.txt"
   planSymbols <- readInPlanSymbols "./Input/Day3.txt"
-  print gears
-  -- print planSymbols
+-- print gears
+-- print planSymbols
   let count = countGears gears planSymbols
   print count
