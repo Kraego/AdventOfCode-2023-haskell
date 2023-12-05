@@ -95,6 +95,24 @@ countGears :: [GearNumber] -> [PlanSymbol] -> Int
 countGears [] _ = 0
 countGears (x:xs) ys = getAdjacentCount x ys + countGears xs ys
 
+isAdjacentToGear :: PlanSymbol -> GearNumber -> Bool
+isAdjacentToGear y x
+    | abs (rowIdx y - row x) <= 1 && (idx y >= startIdx x && idx y <= endIdx x) = True --symbol below / above
+    | abs (rowIdx y - row x) <= 1 && (abs (idx y - startIdx x) <= 1 || abs (idx y - endIdx x) <= 1) = True -- symbol left/right
+    | otherwise = False
+
+countRatio :: PlanSymbol -> [GearNumber] -> Int
+countRatio _ [] = 0
+countRatio x ys
+    | length matchings == 2 = foldl (*) 1 $ map val matchings
+    | otherwise = 0
+    where
+        matchings = filter (isAdjacentToGear x) ys
+
+calculateGearRatio :: [PlanSymbol] -> [GearNumber] -> Int
+calculateGearRatio [] _ = 0
+calculateGearRatio (x:xs) ys = countRatio x ys + calculateGearRatio xs ys  
+
 main :: IO ()
 main = do
   gears <- readInMachineGears "./Input/Day3.txt"
@@ -103,3 +121,5 @@ main = do
 --   print planSymbols
   let count = countGears gears planSymbols
   print count
+  let gearRatio = calculateGearRatio planSymbols gears
+  print gearRatio
