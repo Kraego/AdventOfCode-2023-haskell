@@ -32,23 +32,10 @@ getWinningsPart xs
     where
         startIdx = getFirstIdxOfSymbol xs '|'
 
-getNumber :: [Char] -> [Char]
-getNumber [] = []
-getNumber (x:xs)
-    | isDigit x = x:getNumber xs
-    | otherwise = []
-
-getNumberStr :: [Char] -> [[Char]]
-getNumberStr xs
-    | null xs = []
-    | otherwise = number : getNumberStr (drop toDrop xs)
-    where
-        number = getNumber xs
-        toDrop = length number + 1
 
 getNumbers :: [Char] -> [Int]
 getNumbers [] = []
-getNumbers xs = map read $ filter (/= "") $ getNumberStr xs
+getNumbers xs = map read $ filter (/= "") $ words xs
 
 getCardData :: [Char] -> CardData
 getCardData xs = CardData numbersPart winningsPart
