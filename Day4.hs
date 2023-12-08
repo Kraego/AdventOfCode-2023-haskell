@@ -32,9 +32,7 @@ getWinningsPart xs
     where
         startIdx = getFirstIdxOfSymbol xs '|'
 
-
 getNumbers :: [Char] -> [Int]
-getNumbers [] = []
 getNumbers xs = map read $ filter (/= "") $ words xs
 
 getCardData :: [Char] -> CardData
