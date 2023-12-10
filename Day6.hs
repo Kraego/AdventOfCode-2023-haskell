@@ -1,10 +1,24 @@
-readInGame :: FilePath -> IO [(Int, Int)]
-readInGame fp = do
+readLineNumber :: String -> Int
+readLineNumber x = read $ concat (tail (words x))
+
+readLineNumbers :: String -> [Int]
+readLineNumbers x = map read $ tail $ words x
+
+readInGame1 :: FilePath -> IO [(Int, Int)]
+readInGame1 fp = do
     contents <- readFile fp
     let gameData = lines contents
-        times = map read (tail (words (head gameData)))
-        distances = map read (tail (words (last gameData)))
+        times = readLineNumbers $ head gameData
+        distances = readLineNumbers $ last gameData
     return $ zip times distances
+
+readInGame2 :: FilePath -> IO (Int, Int)
+readInGame2 fp = do
+    contents <- readFile fp
+    let gameData = lines contents
+        time = readLineNumber $ head gameData
+        distance = readLineNumber $ last gameData
+    return (time, distance)
 
 distances :: Int -> [Int]
 distances time = map (\x-> (time - x) * x) [0..time]
@@ -14,5 +28,7 @@ wins (time, distance) = length $ filter (>distance) $ distances time
 
 main :: IO ()
 main = do
-  gameData <- readInGame "./Input/Day6.txt"
-  print $ product $ map wins gameData
+  gameDataPart1 <- readInGame1 "./Input/Day6.txt"
+  print $ product $ map wins gameDataPart1
+  gameDataPart2 <- readInGame2 "./Input/Day6.txt"
+  print $ wins gameDataPart2
