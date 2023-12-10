@@ -1,7 +1,6 @@
 import Data.List.Split (splitOn, chunksOf)
 import Data.Array ( Ix(inRange, range) )
 
--- DestStart SourceStart rangeLength
 type Range = (Int, Int, Int)
 
 dest :: (a, b, c) -> a
@@ -28,23 +27,17 @@ main = do
     let input = map lines inputs
         ranges = getRanges input
         seeds = getSeeds input
+        -- results in many seeds :(
+        expandedSeeds = concatMap (\(dest : srcRange : _) -> [dest .. (dest - 1 + srcRange)]) $ chunksOf 2 seeds
     -- print ranges
-    print $ minimum $ map (getLocation ranges) seeds
-    print $ minimum $ map (getLocation ranges) $ expandSeeds seeds
+    print $ minimum $ map (`getMappingResult` ranges) seeds
+    print $ minimum $ map (`getMappingResult` ranges) expandedSeeds
 
--- results in many seed :(
-expandSeeds :: [Int] -> [Int]
-expandSeeds [] = []
-expandSeeds xs =  newRange ++ expandSeeds (drop 2 xs)
-    where
-        newRange  = takeWhile (<=head (tail xs)) $ iterate (+1) $ head xs
+getMappingResult :: Int -> [[Range]] -> Int
+getMappingResult = foldl adaptCurrent
 
-getLocation :: [[Range]] -> Int -> Int
-getLocation xs current = foldl (flip adaptCurrent) current xs
-
-adaptCurrent :: [Range] -> Int -> Int
-adaptCurrent [] current = current
-adaptCurrent (x:xs) current
+adaptCurrent :: Int -> [Range] -> Int
+adaptCurrent current [] = current
+adaptCurrent current (x:xs)
     | inRange (srcRange x, srcRange x + rangeLen x) current = dest x + current - srcRange x
-    | otherwise = adaptCurrent xs current
-
+    | otherwise = adaptCurrent current xs
