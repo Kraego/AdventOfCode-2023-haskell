@@ -1,0 +1,41 @@
+{
+  "name": "Editor",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": {
+    "ghcr.io/rocker-org/devcontainer-features/apt-packages:1": {
+      "packages": "pkg-config"
+    },
+    "ghcr.io/devcontainers-contrib/features/haskell:2": {
+      "globalPackages": "hlint ormolu"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "haskell.haskell",
+        "james-yu.latex-workshop"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "git.fetchOnPull": true,
+        "git.autofetch": "all",
+        "git.pruneOnFetch": true,
+        "git.autofetchPeriod": 3600,
+        "update.showReleaseNotes": false,
+        "githubPullRequests.ignoredPullRequestBranches": [
+          "main"
+        ]
+      }
+    }
+  },
+  "onCreateCommand": {
+    "clean": "cp ~/.cabal/bin/* ~/.local/bin/ && rm -r ~/.cabal/"
+  },
+  "postStartCommand": {
+    "pull": "git pull --all"
+  },
+  "hostRequirements": {
+    "memory": "16gb",
+    "storage": "32gb"
+  }
+}
