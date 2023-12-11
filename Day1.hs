@@ -1,6 +1,8 @@
 import Data.Char (isDigit)
 import qualified Data.Text    as Text
 import qualified Data.Text.IO as Text
+import Data.Maybe (fromJust)
+import Data.List (find)
 
 -- address overlapping
 replaceNumStrings :: [Char] -> [Char]
@@ -18,9 +20,7 @@ replaceNumStrings xs
     | otherwise = head xs : replaceNumStrings (tail xs)
 
 firstDigit :: [Char] -> Char
-firstDigit (x:xs)
-    | isDigit x = x
-    | otherwise = firstDigit xs
+firstDigit = fromJust. find isDigit -- boldly assume that there is a digit
 
 sumLine :: [Char] -> Int
 sumLine xs = read $ firstDigit xs : [firstDigit (reverse xs)]

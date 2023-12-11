@@ -1,36 +1,19 @@
 import Data.Char(isDigit)
 import Data.Maybe(isJust, isNothing, fromJust)
 import Data.List(intersect)
+import Data.List.Split (splitOn)
+
 
 data CardData = CardData{
     numbers :: [Int],
     winnings :: [Int]
     } deriving Show
 
-getFirstIdxOfSymbol :: [Char] -> Char -> Maybe Int
-getFirstIdxOfSymbol [] s = Nothing
-getFirstIdxOfSymbol xs s
-    | not (null symIdx) = Just (fst $ head symIdx)
-    | otherwise = Nothing
-    where
-        symIdx = filter (\x-> snd x == s) (zip [0..] xs)
-
 getNumbersPart :: [Char] -> [Char]
-getNumbersPart [] = []
-getNumbersPart xs
-    | isNothing startIdx || isNothing endIdx = []
-    | otherwise = take (fromJust endIdx - fromJust startIdx - 1) $ drop (fromJust startIdx + 1) xs
-    where
-        startIdx = getFirstIdxOfSymbol xs ':'
-        endIdx = getFirstIdxOfSymbol xs '|'
+getNumbersPart xs = last $ splitOn ":" $ head $ splitOn "|" xs
 
 getWinningsPart :: [Char] -> [Char]
-getWinningsPart [] = []
-getWinningsPart xs
-        | isNothing startIdx = []
-        | otherwise = drop (fromJust startIdx + 1) xs
-    where
-        startIdx = getFirstIdxOfSymbol xs '|'
+getWinningsPart xs = last $ splitOn "|" xs
 
 getNumbers :: [Char] -> [Int]
 getNumbers xs = map read $ filter (/= "") $ words xs
@@ -59,14 +42,14 @@ countCardPoints card
 
 updateCards :: [(Int, Int)] -> Int -> Int -> Int -> [(Int, Int)]
 updateCards [] _ _ _ = []
-updateCards (x:xs) idx current matches
-    | fst x > idx && fst x <= idx + matches = (fst x, snd x + current):updateCards xs idx current matches
-    | otherwise = x:updateCards xs idx current matches
+updateCards ((cardIdx, cardVal):xs) idx current matches
+    | cardIdx > idx && cardIdx <= idx + matches = (cardIdx, cardVal + current):updateCards xs idx current matches
+    | otherwise = (cardIdx, cardVal):updateCards xs idx current matches
 
 countCards :: [CardData] -> Int -> [(Int,Int)] -> Int
 countCards [] _ cards = sum $ map snd cards
 countCards (x:xs) cardIdx cards = countCards xs (cardIdx + 1) $ updateCards cards cardIdx currentCards points
-    where 
+    where
         points = countPointMatches (numbers x) (winnings x)
         currentCards = snd $ cards!!cardIdx
 

@@ -1,4 +1,6 @@
 import Data.Char (isDigit)
+import Data.List (isInfixOf)
+import Data.List.Split (splitOn)
 
 data CubeRecord = CubeRecord{
     gameId :: Int,
@@ -7,16 +9,11 @@ data CubeRecord = CubeRecord{
     blue :: Int
     } deriving Show
 
-getToken :: [Char] -> [Char]
-getToken (x:xs)
-    | null xs = [x]
-    | x == ',' = []
-    | x == ';' = []
-    | x == ':' = []
-    | otherwise = x : getToken xs
+getToken :: String -> String
+getToken = takeWhile (\x -> x /= ',' && x /= ':' && x /= ';')
 
-tokenize :: [Char] -> [[Char]]
-tokenize xs
+tokenize :: String -> [String]
+tokenize xs 
     | null xs = []
     | otherwise = token : tokenize (drop toDrop xs)
     where
@@ -24,38 +21,18 @@ tokenize xs
         toDrop = length token + 1
 
 getGameId :: [Char] -> Int
-getGameId xs = read $ drop keyLen xs
-    where
-        key = "Game "
-        keyLen = length key
+getGameId xs = read $ last $ splitOn "Game " xs
 
-getNumber :: [Char] -> [Char]
-getNumber [] = []
-getNumber (x:xs)
-    | isDigit x = x : getNumber xs
-    | otherwise = getNumber xs
+getNumber :: String -> String
+getNumber = filter isDigit
 
-contains :: [Char] -> [Char] -> Bool
-contains xs ys
-    | null xs = False
-    | ys == take (length ys) xs = True
-    | otherwise = contains (tail xs) ys
+getTokensForKey :: [String] -> String -> [String]
+getTokensForKey tokens key = filter (key `isInfixOf`) tokens
 
-getTokensForKey :: [[Char]] -> [Char] -> [[Char]]
-getTokensForKey tokens key = filter (`contains` key) tokens
+getMax :: [String] -> Int
+getMax xs = maximum $ map (read . getNumber) xs
 
-getSum :: [[Char]] -> Int
-getSum xs = sum $ map (read . getNumber) xs
-
-getMax :: [[Char]] -> Int
-getMax [x] = read $ getNumber x
-getMax (x:xs)
-    | getMax xs > current = getMax xs
-    | otherwise = current
-    where
-        current = read $ getNumber x
-
-extractFromLine :: [Char] -> CubeRecord
+extractFromLine :: String -> CubeRecord
 extractFromLine xs = CubeRecord gameId red green blue
     where
         tokens = tokenize xs

@@ -1,4 +1,5 @@
 import Data.Char (isDigit)
+import Data.List(findIndex)
 import Data.Maybe(isJust, isNothing, fromJust)
 
 data GearNumber = GearNumber{
@@ -13,30 +14,18 @@ data PlanSymbol = PlanSymbol{
     rowIdx :: Int
 } deriving Show
 
-getFirstMatch :: ((Int, Char) -> Bool) -> [(Int, Char)] -> Maybe Int
-getFirstMatch  _ [] = Nothing
-getFirstMatch match (x:xs)
-    | match x = Just $ fst x
-    | otherwise = getFirstMatch match xs
-
 getFirstDigitIdx :: [(Int, Char)] -> Maybe Int
-getFirstDigitIdx = getFirstMatch (isDigit . snd)
+getFirstDigitIdx = findIndex (isDigit . snd)
 
 isSymbol :: Char -> Bool
-isSymbol x
-    | isDigit x = False
-    | x == '.' = False
-    | otherwise = True
+isSymbol x = not (isDigit x) && x /= '.'
 
 getNumber :: [Char] -> [Char]
-getNumber [] = []
-getNumber (x:xs)
-    | isDigit x = x:getNumber xs
-    | otherwise = []
+getNumber = takeWhile isDigit
 
 countDigits :: (Num a, Integral t) => t -> a
 countDigits 0 = 0
-countDigits n = 1 + countDigits (div n 10)
+countDigits n = 1 + countDigits (n `div` 10)
 
 getNextGearNumber :: [Char] -> Int -> Maybe GearNumber -> Maybe GearNumber
 getNextGearNumber [] _ _ = Nothing
@@ -67,10 +56,7 @@ readInMachineGears fp = do
   return $ concat records
 
 getPlanSymbols:: [(Int, Char)] -> Int -> [PlanSymbol]
-getPlanSymbols (x:xs) row
-    | null xs = []
-    | isSymbol $ snd x = PlanSymbol (fst x) row : getPlanSymbols xs row
-    | otherwise = getPlanSymbols xs row
+getPlanSymbols xs row = map (\x -> PlanSymbol (fst x) row) $ filter (isSymbol . snd) xs
 
 readInPlanSymbols :: FilePath -> IO [PlanSymbol]
 readInPlanSymbols fp = do
@@ -85,14 +71,13 @@ isAdjacent x y
     | abs (rowIdx y - row x) <= 1 && (abs (idx y - startIdx x) <= 1 || abs (idx y - endIdx x) <= 1) = True -- symbol left/right
     | otherwise = False
 
-getAdjacentCount :: GearNumber -> [PlanSymbol] -> Int
-getAdjacentCount x ys
-    | any (isAdjacent x) ys = val x
+getAdjacentCount :: [PlanSymbol] -> GearNumber -> Int
+getAdjacentCount xs y
+    | any (isAdjacent y) xs = val y
     | otherwise = 0
 
 countGears :: [GearNumber] -> [PlanSymbol] -> Int
-countGears [] _ = 0
-countGears (x:xs) ys = getAdjacentCount x ys + countGears xs ys
+countGears xs ys = sum $ map (getAdjacentCount ys) xs
 
 isAdjacentToGear :: PlanSymbol -> GearNumber -> Bool
 isAdjacentToGear y x = isAdjacent x y
@@ -100,14 +85,13 @@ isAdjacentToGear y x = isAdjacent x y
 countRatio :: PlanSymbol -> [GearNumber] -> Int
 countRatio _ [] = 0
 countRatio x ys
-    | length matchings == 2 = foldl (*) 1 $ map val matchings
+    | length matchings == 2 = product $ map val matchings
     | otherwise = 0
     where
         matchings = filter (isAdjacentToGear x) ys
 
 calculateGearRatio :: [PlanSymbol] -> [GearNumber] -> Int
-calculateGearRatio [] _ = 0
-calculateGearRatio (x:xs) ys = countRatio x ys + calculateGearRatio xs ys  
+calculateGearRatio xs ys =  sum $ map (`countRatio` ys) xs
 
 main :: IO ()
 main = do
