@@ -1,14 +1,31 @@
-import Data.List (elemIndex)
+import Data.List (elemIndex, partition)
 import Data.Maybe (fromJust)
 import Data.Set (Set, fromList, elemAt, toList)
-import GHC.Utils.Binary (handleData)
-import GHC.Parser.Lexer (xset)
 
--- actualHand, strength, bet
-type Hand =  (String, Int, Int)
+data Hand =  Hand {cards :: String, strength :: Int,  bet :: Int} deriving Show
 
-betFromHand :: Hand -> Int
-betFromHand (_, _, bet) = bet
+quicksort :: Ord a => [a] -> [a]
+quicksort []     = []
+quicksort (p:xs) = quicksort lesser ++ [p] ++ quicksort greater
+    where (lesser, greater) = partition (< p) xs
+
+hasLessEqKicker :: String -> String -> Bool
+hasLessEqKicker [] _ = True -- equal
+hasLessEqKicker h1 h2
+    | h1Kicker == h2Kicker = hasLessEqKicker (tail h1) (tail h2)
+    | otherwise = h1Kicker < h2Kicker
+    where
+        h1Kicker = fromJust $ cardValue $ head h1
+        h2Kicker = fromJust $ cardValue $ head h2
+
+instance Eq Hand where
+    (Hand h1 s1 _) == (Hand h2 s2 _) = s1 == s2 && h1 == h2
+
+instance Ord Hand where
+    (<=) (Hand h1 s1 _) (Hand h2 s2 _)
+        | s1 < s2 = True
+        | s1 == s2 && h1 `hasLessEqKicker` h2 = True
+        | otherwise = False
 
 cardValue :: Char -> Maybe Int
 cardValue x = elemIndex x "23456789TJQKA"
@@ -39,8 +56,8 @@ handStrength hand
         differentCards = length handSet
 
 handFromString :: String -> Hand
-handFromString xs = (hand, handStrength hand, read $ last handItems)
-    where 
+handFromString xs = Hand {cards = hand, strength = handStrength hand, bet = read $ last handItems}
+    where
         handItems = words xs
         hand = head handItems
 
@@ -50,43 +67,13 @@ readInHands fp = do
     let handData = lines contents
     return $ map handFromString handData
 
-hasGtEqKicker :: String -> String -> Bool
-hasGtEqKicker [] _ = True
-hasGtEqKicker hand1 hand2 
-    | hand1Head == hand2Head = hasGtEqKicker (tail hand1) (tail hand2)
-    | otherwise = hand1Head > hand2Head
-    where
-        hand1Head = fromJust $ cardValue $ head hand1
-        hand2Head = fromJust $ cardValue $ head hand2
-
-isGtHand :: Hand -> Hand -> Bool
-isGtHand (hand1, score1, _) (hand2, score2, _) 
-    | score2 == score1 = hasGtEqKicker hand1 hand2
-    | otherwise = score1 > score2 
-
-hasLessKicker :: String -> String -> Bool
-hasLessKicker [] _ = False -- not equal 
-hasLessKicker hand1 hand2 = hasGtEqKicker hand2 hand1
-
-isLessHand :: Hand -> Hand -> Bool
-isLessHand (hand1, score1, _) (hand2, score2, _) 
-    | score2 == score1 = hasLessKicker hand1 hand2
-    | otherwise = score1 < score2 
-
-quicksort :: [Hand] -> [Hand]
-quicksort []     = []
-quicksort (p:xs) = (quicksort lesser) ++ [p] ++ (quicksort greater)
-    where
-        lesser  = filter (isLessHand p) xs
-        greater = filter (isGtHand p) xs
-
 calculateGames :: [(Hand, Int)] -> Int
-calculateGames hands = sum $ map (\x -> betFromHand (fst x) * snd x) hands 
+calculateGames hands = sum $ map (\x -> bet (fst x) * snd x) hands
+
 
 main :: IO ()
 main = do
   handData1 <- readInHands "./Input/Day7.txt"
-  -- print handData1
   let sortedHands = quicksort handData1
-      rankedHands = zip (reverse sortedHands) [1..]
+      rankedHands = zip sortedHands [1..]
   print $ calculateGames rankedHands
