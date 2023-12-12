@@ -95,8 +95,8 @@ calculateGearRatio xs ys =  sum $ map (`countRatio` ys) xs
 
 main :: IO ()
 main = do
-  gears <- readInMachineGears "./Input/Day3.txt"
-  planSymbols <- readInPlanSymbols "./Input/Day3.txt"
+  gears <- readInMachineGears "./Input/Day03.txt"
+  planSymbols <- readInPlanSymbols "./Input/Day03.txt"
 --   mapM_ print gears
 --   mapM_ print planSymbols
   let count = countGears gears planSymbols

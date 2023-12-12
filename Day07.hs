@@ -99,8 +99,8 @@ calculateGames hands = sum $ map (\x -> bet (fst x) * snd x) hands
 
 main :: IO ()
 main = do
-  handData1 <- readInHands "./Input/Day7.txt"
-  handData2 <- readInHandsWithJokers "./Input/Day7.txt"
+  handData1 <- readInHands "./Input/Day07.txt"
+  handData2 <- readInHandsWithJokers "./Input/Day07.txt"
 
   let sortedHands1 = quicksort handData1
       rankedHands1 = zip sortedHands1 [1..]

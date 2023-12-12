@@ -28,7 +28,7 @@ wins (time, distance) = length $ filter (>distance) $ distances time
 
 main :: IO ()
 main = do
-  gameDataPart1 <- readInGame1 "./Input/Day6.txt"
+  gameDataPart1 <- readInGame1 "./Input/Day06.txt"
   print $ product $ map wins gameDataPart1
-  gameDataPart2 <- readInGame2 "./Input/Day6.txt"
+  gameDataPart2 <- readInGame2 "./Input/Day06.txt"
   print $ wins gameDataPart2

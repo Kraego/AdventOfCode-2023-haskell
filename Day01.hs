@@ -38,5 +38,5 @@ doIt fp = do
 
 main :: IO ()
 main = do
-  result <- doIt "./Input/Day1.txt"
+  result <- doIt "./Input/Day01.txt"
   print result

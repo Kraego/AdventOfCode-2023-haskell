@@ -58,7 +58,7 @@ powerOfCubes xs = sum (map powerRecord xs)
 
 main :: IO ()
 main = do
-  records <- readInRecords "./Input/Day2.txt"
+  records <- readInRecords "./Input/Day02.txt"
   let matching = filter (\x -> red x <= 12 && green x <= 13 && blue x <= 14) records
   print $ idSum matching
   print $ powerOfCubes records

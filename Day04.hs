@@ -55,7 +55,7 @@ countCards (x:xs) cardIdx cards = countCards xs (cardIdx + 1) $ updateCards card
 
 main :: IO ()
 main = do
-  cards <- readInCard "./Input/Day4.txt"
+  cards <- readInCard "./Input/Day04.txt"
   -- mapM_ print cards
   let points = sum (map countCardPoints cards)
   print points

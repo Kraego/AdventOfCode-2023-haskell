@@ -23,7 +23,7 @@ categories = splitOn "\n\n"
 
 main :: IO ()
 main = do
-    inputs <- categories <$> readFile "./Input/Day5.txt"
+    inputs <- categories <$> readFile "./Input/Day05.txt"
     let input = map lines inputs
         ranges = getRanges input
         seeds = getSeeds input
