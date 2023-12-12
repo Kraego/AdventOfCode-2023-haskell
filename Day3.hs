@@ -97,8 +97,8 @@ main :: IO ()
 main = do
   gears <- readInMachineGears "./Input/Day3.txt"
   planSymbols <- readInPlanSymbols "./Input/Day3.txt"
---   print gears
---   print planSymbols
+--   mapM_ print gears
+--   mapM_ print planSymbols
   let count = countGears gears planSymbols
   print count
   let gearRatio = calculateGearRatio planSymbols gears

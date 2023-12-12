@@ -29,7 +29,7 @@ main = do
         seeds = getSeeds input
         -- results in many seeds :(
         expandedSeeds = concatMap (\(dest : srcRange : _) -> [dest .. (dest - 1 + srcRange)]) $ chunksOf 2 seeds
-    -- print ranges
+    -- mapM_ print ranges
     print $ minimum $ map (`getMappingResult` ranges) seeds
     print $ minimum $ map (`getMappingResult` ranges) expandedSeeds
 

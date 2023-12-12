@@ -1,8 +1,11 @@
 import Data.List (elemIndex, partition)
 import Data.Maybe (fromJust)
-import Data.Set (Set, fromList, elemAt, toList)
+import Data.Set (Set, fromList, elemAt, toList, member)
 
-data Hand =  Hand {cards :: String, strength :: Int,  bet :: Int} deriving Show
+data Hand =  Hand {hand :: String, strength :: Int,  bet :: Int} deriving Show
+
+updateStrength :: Hand -> Int -> Hand
+updateStrength x strength = Hand {hand = hand x, strength = strength, bet = bet x}
 
 quicksort :: Ord a => [a] -> [a]
 quicksort []     = []
@@ -28,7 +31,7 @@ instance Ord Hand where
         | otherwise = False
 
 cardValue :: Char -> Maybe Int
-cardValue x = elemIndex x "23456789TJQKA"
+cardValue x = elemIndex x "J23456789TQKA"
 
 countOccurrence :: Char -> String -> Int
 countOccurrence x xs = length $ filter (== x) xs
@@ -56,16 +59,39 @@ handStrength hand
         differentCards = length handSet
 
 handFromString :: String -> Hand
-handFromString xs = Hand {cards = hand, strength = handStrength hand, bet = read $ last handItems}
+handFromString xs = Hand {hand = currentHand, strength = handStrength currentHand, bet = read $ last handItems}
     where
         handItems = words xs
-        hand = head handItems
+        currentHand = head handItems
 
 readInHands :: FilePath -> IO [Hand]
 readInHands fp = do
     contents <- readFile fp
     let handData = lines contents
     return $ map handFromString handData
+
+readInHandsWithJokers :: FilePath -> IO [Hand]
+readInHandsWithJokers fp = do
+    contents <- readFile fp
+    let handData = lines contents
+    return $ map (optimizeHand . handFromString) handData
+
+optimizeHand :: Hand -> Hand
+optimizeHand currHand
+    | member 'J' cards && strength currHand < 6 = boostHand currHand $ strength currHand
+    | otherwise = currHand
+    where cards = fromList $ hand currHand
+
+boostHand :: Hand -> Int -> Hand
+boostHand currHand strength 
+    | strength == 5 = updateStrength currHand 6                     -- four of Kind to five of kind
+    | strength == 4 = updateStrength currHand 6                     -- full house to five of kind 
+    | strength == 3 = updateStrength currHand 5                     -- three of a kind to four of a kind
+    | strength == 2 && (jokers == 2) = updateStrength currHand 5    -- two pairs to four of a kind
+    | strength == 2 = updateStrength currHand 4                     -- two pairs to full house
+    | strength == 1 = updateStrength currHand 3                     -- one pair to three of a kind
+    | strength == 0 = updateStrength currHand 1                     -- nothing to one pair
+    where jokers = length $ filter (=='J') $ hand currHand
 
 calculateGames :: [(Hand, Int)] -> Int
 calculateGames hands = sum $ map (\x -> bet (fst x) * snd x) hands
@@ -74,6 +100,14 @@ calculateGames hands = sum $ map (\x -> bet (fst x) * snd x) hands
 main :: IO ()
 main = do
   handData1 <- readInHands "./Input/Day7.txt"
-  let sortedHands = quicksort handData1
-      rankedHands = zip sortedHands [1..]
-  print $ calculateGames rankedHands
+  handData2 <- readInHandsWithJokers "./Input/Day7.txt"
+
+  let sortedHands1 = quicksort handData1
+      rankedHands1 = zip sortedHands1 [1..]
+      sortedHands2 = quicksort handData2
+      rankedHands2 = zip sortedHands2 [1..]
+
+  -- mapM_ print rankedHands1
+  print $ calculateGames rankedHands1
+  -- mapM_ print rankedHands2
+  print $ calculateGames rankedHands2
