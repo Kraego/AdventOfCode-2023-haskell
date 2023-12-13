@@ -41,10 +41,7 @@ countCardPoints card
         points = countPointMatches (numbers card) (winnings card)
 
 updateCards :: [(Int, Int)] -> Int -> Int -> Int -> [(Int, Int)]
-updateCards [] _ _ _ = []
-updateCards ((cardIdx, cardVal):xs) idx current matches
-    | cardIdx > idx && cardIdx <= idx + matches = (cardIdx, cardVal + current):updateCards xs idx current matches
-    | otherwise = (cardIdx, cardVal):updateCards xs idx current matches
+updateCards xs idx current matches = [if fst x > idx && fst x <= idx + matches then (fst x , snd x + current) else x | x <- xs] 
 
 countCards :: [CardData] -> Int -> [(Int,Int)] -> Int
 countCards [] _ cards = sum $ map snd cards

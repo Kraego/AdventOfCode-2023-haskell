@@ -7,10 +7,10 @@ dest :: (a, b, c) -> a
 dest (x, _, _) = x
 
 srcRange :: (a, b, c) -> b
-srcRange (_, y, _) = y
+srcRange (_, x, _) = x
 
 rangeLen :: (a, b, c) -> c
-rangeLen (_, _, z) = z
+rangeLen (_, _, x) = x
 
 getSeeds :: [[String]] -> [Int]
 getSeeds xs = map read $ drop 1 $ words $ head $ head xs
