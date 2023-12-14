@@ -19,10 +19,7 @@ getNumbers :: [Char] -> [Int]
 getNumbers xs = map read $ filter (/= "") $ words xs
 
 getCardData :: [Char] -> CardData
-getCardData xs = CardData numbersPart winningsPart
-    where
-        numbersPart = getNumbers $ getNumbersPart xs
-        winningsPart = getNumbers $ getWinningsPart xs
+getCardData xs = CardData ((getNumbers . getNumbersPart) xs) ((getNumbers . getWinningsPart) xs)
 
 readInCard :: FilePath -> IO [CardData]
 readInCard fp = do
